@@ -18,6 +18,10 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-tags: ${{ inputs.version }}
+      - name: build docker image
+        run: |
+          echo "Building docker image ${{ inputs.version }} "
+          echo "DOCKER IMAGE BUILDED"
       - name: push docker image
         run: |
           echo "Pushing docker image ${{ inputs.version }} to ${{ inputs.environment }}"

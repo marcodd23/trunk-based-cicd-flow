@@ -1,0 +1,128 @@
+# The workflow pulls the Docker image from the source environment and pushes it to the target environment.
+# Required Environment Specific Variables that need to be defined in the repository configuration settings:
+# - GCP_PROJECT_ID: The Google Cloud Project ID for every environment.
+# - GCP_DEPLOYER_SERVICE_ACCOUNT: The Service Account Name for CI/CD in every environment.
+# - GCP_PROJECT_NUMBER: The Project Number for every environment.
+# - GCP_WORKLOAD_IDENTITY_PROVIDER: The Workload Identity Federation name for CI/CD for every environment.
+# - GCP_REGION: The region of your GCP services for every environment.
+
+name: publish docker image from source to target environment
+
+on:
+  workflow_call:
+    inputs:
+      source_env:
+        type: string
+        required: true
+        description: choose the environment from which the docker image will be pulled, for example dev or stage.
+      source_version:
+        type: string
+        required: true
+        description: choose the image version in source environment to copy to the target environment.
+      target_env:
+        type: string
+        required: true
+        description: choose the environment to which the docker image will be published, for example stage or prod.
+      service_name:
+        type: string
+        required: true
+        description: the name of the service for which the docker image will be pulled and pushed.
+
+env:
+  ARTIFACT_REGISTRY_BASE_URL: europe-west4-docker.pkg.dev
+  ARTIFACT_REGISTRY_REPO_NAME: docker-repo
+
+jobs:
+  export-source-env-variables:
+    name: export ${{ inputs.source_env }} variables
+    environment: ${{ inputs.source_env }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: export ${{ inputs.source_env }} variables for the 'docker' job
+        id: export-source-env-variables
+        run: |-
+          echo "GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }}" >> "$GITHUB_OUTPUT"
+          echo "GCP_DEPLOYER_SERVICE_ACCOUNT=${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}" >> "$GITHUB_OUTPUT"
+          echo "GCP_PROJECT_NUMBER=${{ vars.GCP_PROJECT_NUMBER }}" >> "$GITHUB_OUTPUT"
+          echo "GCP_WORKLOAD_IDENTITY_PROVIDER=${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}" >> "$GITHUB_OUTPUT"
+          echo "GCP_REGION=${{ vars.GCP_REGION }}" >> "$GITHUB_OUTPUT"
+    outputs:
+      GCP_PROJECT_ID: ${{ steps.export-source-env-variables.outputs.GCP_PROJECT_ID }}
+      GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ steps.export-source-env-variables.outputs.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+      GCP_PROJECT_NUMBER: ${{ steps.export-source-env-variables.outputs.GCP_PROJECT_NUMBER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ steps.export-source-env-variables.outputs.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_REGION: ${{ steps.export-source-env-variables.outputs.GCP_REGION }}
+
+  export-docker-vars:
+    name: export docker tags for the target
+    environment: ${{ inputs.target_env }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: export docker tags for the 'docker' job
+        id: export-docker-tags-and-images
+        run: |-
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          VERSION=${{ inputs.source_version }}
+          SOURCE_IMAGE="${{ env.ARTIFACT_REGISTRY_BASE_URL }}/${{ needs.export-source-env-variables.outputs.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO_NAME }}/${{ inputs.service_name }}:${{ inputs.source_version }}"
+          TARGET_IMAGE="${{ env.ARTIFACT_REGISTRY_BASE_URL }}/${{ vars.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO_NAME }}/${{ inputs.service_name }}"
+          TARGET_IMAGE_SHA_TAG="${TARGET_IMAGE}:${SHORT_SHA}"
+          TARGET_IMAGE_VERSION_TAG="${TARGET_IMAGE}:${VERSION}"
+
+          echo "SOURCE_IMAGE=${SOURCE_IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "TARGET_IMAGE=${TARGET_IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "TARGET_IMAGE_SHA_TAG=${TARGET_IMAGE_SHA_TAG}" >> "$GITHUB_OUTPUT"
+          echo "TARGET_IMAGE_VERSION_TAG=${TARGET_IMAGE_VERSION_TAG}" >> "$GITHUB_OUTPUT"
+    outputs:
+      SOURCE_IMAGE: ${{ steps.export-docker-tags-and-images.outputs.SOURCE_IMAGE }}
+      TARGET_IMAGE: ${{ steps.export-docker-tags-and-images.outputs.TARGET_IMAGE }}
+      TARGET_IMAGE_SHA_TAG: ${{ steps.export-docker-tags-and-images.outputs.TARGET_IMAGE_SHA_TAG }}
+      TARGET_IMAGE_VERSION_TAG: ${{ steps.export-docker-tags-and-images.outputs.TARGET_IMAGE_VERSION_TAG }}
+
+  docker:
+    name: pull docker image from ${{ inputs.source_env }} and push it to ${{ inputs.target_env }}
+    environment: ${{ inputs.target_env }}
+    runs-on: ubuntu-latest
+    needs: [export-source-env-variables, export-docker-vars]
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      # Authenticate for source environment
+      - name: acquire gcp token for ${{ inputs.source_env }} environment
+        uses: google-github-actions/auth@v2.1.5
+        with:
+          workload_identity_provider: ${{ needs.export-source-env-variables.outputs.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ needs.export-source-env-variables.outputs.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: register gcloud as a docker credential helper for ${{ inputs.source_env }} environment
+        run: gcloud auth configure-docker "${{ env.ARTIFACT_REGISTRY_BASE_URL }}"
+
+      # Pull the Docker image from the source environment
+      - name: Pull image from ${{ inputs.source_env }} environment
+        run: |
+          docker pull "${{ needs.export-docker-vars.outputs.SOURCE_IMAGE }}"
+
+      # Authenticate for target environment
+      - name: acquire gcp token for ${{ inputs.target_env }} environment
+        uses: google-github-actions/auth@v2.1.5
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      # Tag the Docker image for the target environment
+      - name: Tag Docker image for target environment and PUSH
+        run: |
+          docker tag "${{ needs.export-docker-vars.outputs.SOURCE_IMAGE }}" "${{ needs.export-docker-vars.outputs.TARGET_IMAGE_SHA_TAG }}"
+          docker tag "${{ needs.export-docker-vars.outputs.SOURCE_IMAGE }}" "${{ needs.export-docker-vars.outputs.TARGET_IMAGE_VERSION_TAG }}"
+
+      # Push the Docker image to the target environment
+      - name: Push Docker image to target environment
+        run: |
+          docker push "${{ needs.export-docker-vars.outputs.TARGET_IMAGE_SHA_TAG }}"
+          docker push "${{ needs.export-docker-vars.outputs.TARGET_IMAGE_VERSION_TAG }}"

@@ -1,0 +1,63 @@
+# This workflow was created to rollback the current release to an older full release.
+# So this workflow should be only used in an emergency when the on call team needs to do a rollback.
+# We need to consider 3 scenarios, but only one scenario will lead to a successful execution of this workflow:
+
+# 1. An older full release is edited and is set as latest release.
+#    This scenario is a valid one and should be used to do a rollback.
+#    This scenario will lead to a successful execution of this workflow.
+#    This scenario does not trigger the "on-release.yml" workflow.
+
+# 2. An older prerelease is edited and is set as latest release.
+#    This scenario is a valid one and should be used to do a rollback.
+#    Nevertheless in this scenario this workflow will fail due to a GitHub Actions bug.
+#    The bug is that the field "github.event.changes.make_latest.to" will not be set in this scenario.
+#    But this is not a problem, in this scenario "on-release.yml" will be triggered anyway and deploy the release.
+
+# 3. A newer prerelease is edited and is set as latest release.
+#    This scenario is not a rollback scenario and so not a valid scenario.
+#    Nevertheless this workflow will be triggered.
+#    This is not a problem, because in this scenario this workflow will fail due to the mentioned GitHub Actions bug.
+#    Furthermore in this scenario "on-release.yml" will be triggered anyway and deploy the release.
+
+name: on rollback-release
+
+on:
+  release:
+    types: [edited]
+
+concurrency:
+  group: on-release
+
+permissions:
+  contents: write
+  deployments: write
+  id-token: write
+  repository-projects: write
+
+jobs:
+  rollback-check:
+    name: check if an older full release was set as latest release
+    runs-on: ubuntu-latest
+    if: ${{ github.event.changes.make_latest.to == 'true'}}
+    # This condition is only fulfilled in the first scenario due to the mentioned GitHub Actions bug.
+    steps:
+      - run: echo "rollback to an older full release"
+
+  docker:
+    name: "Building Docker Image: Prod"
+    uses: ./.github/workflows/docker.yaml
+    secrets: inherit
+    if: ${{ github.event.release.tag_name != '' }}
+    with:
+      environment: prod
+      version: ${{ github.event.release.tag_name }}
+
+  deploy-to-prod:
+    name: "Deployment: Stage"
+    uses: ./.github/workflows/deployment.yaml
+    secrets: inherit
+    needs: [docker]
+    if: ${{ github.event.release.tag_name != '' }}
+    with:
+      environment: prod
+      version: ${{ github.event.release.tag_name }}

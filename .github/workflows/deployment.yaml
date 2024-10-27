@@ -1,0 +1,28 @@
+name: deployment
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+
+jobs:
+  deploy:
+    name: "Deployment"
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-tags: ${{ inputs.version }}
+      - name: deploy
+        run: |
+          echo "Deploying the app version ${{ inputs.version }} to ${{ inputs.environment }}"

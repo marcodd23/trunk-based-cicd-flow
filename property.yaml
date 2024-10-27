@@ -1,0 +1,52 @@
+# Basic config
+name: demo-app
+environment: local
+version: latest
+
+logging:
+  level: DEBUG
+
+gcp:
+  projectNumber: 407052009906
+  project: ingka-opoa-nexus-dev
+  location: europe-west4
+
+server:
+  port: 8080
+  concurrency: 10
+  disableStartupMsg: false
+
+
+# Service specific config
+databases:
+  common:
+    name: common-db
+    hostMaster: ingka-orderpromise-acl-dev:europe-west4:acl-common-db-dev
+    hostReplica: ingka-orderpromise-acl-dev:europe-west4:acl-common-db-dev
+    port: 5432
+    user: demo-app
+    password: password
+    secret:
+      value: demo-app-credentials
+      version: latest
+    poolMaxConns: 4
+    fetchBatch: 1000
+
+app:
+  serviceAccount: 407052009906-compute@developer.gserviceaccount.com
+  image:
+    repository: europe-west4-docker.pkg.dev/ingka-opoa-nexus-dev/nexus-docker-repo
+    name: demo-app
+    pullPolicy: Always
+    tag: latest
+  resources:
+    cpu: 1
+    minInstances: 0
+    maxInstances: 10
+    requestTimeout: 300
+    memory: 512Mi
+    ingress: all
+    port: 8080
+    concurrency: 80
+    cpuThrottling: true
+    executionEnvironment: gen1

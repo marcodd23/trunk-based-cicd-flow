@@ -1,0 +1,72 @@
+name: on PR merged
+
+on:
+  push:
+    branches:
+      - main
+    tags-ignore:
+      - '**'
+
+concurrency:
+  group: branch-versioning
+
+permissions:
+  contents: write
+  deployments: write
+  id-token: write
+  pull-requests: write
+  repository-projects: write
+
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump_version_generator.outputs.new_tag }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      #################################
+      ## Calculate Version and tag
+      #################################
+      # Prepare release version bumping previous tag and pushing new one
+      # https://github.com/marketplace/actions/github-tag-bump
+      - name: Bump version
+        id: bump_version_generator
+        uses: anothrNick/github-tag-action@1.70.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: patch
+          WITH_V: true
+          INITIAL_VERSION: 0.0.0
+          RELEASE_BRANCHES: main
+          DEFAULT_BRANCH: main
+          DRY_RUN: false
+          VERBOSE: true
+
+  docker:
+    name: "Building Docker Image: Stage"
+    uses: ./.github/workflows/docker.yaml
+    needs: [create-tag]
+    if: ${{ needs.create-tag.outputs.new_version != '' }}
+    with:
+      environment: dev
+      version: ${{ needs.create-tag.outputs.new_version }}
+
+  deploy-to-dev:
+    name: "Deployment: Dev"
+    uses: ./.github/workflows/deployment.yaml
+    needs: [create-tag, docker]
+    if: ${{ needs.create-tag.outputs.new_version != '' }}
+    with:
+      environment: dev
+      version: ${{ needs.create-tag.outputs.new_version }}
+
+
+
+
+
+

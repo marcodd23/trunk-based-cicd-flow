@@ -1,0 +1,105 @@
+name: on PR
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+      - reopened
+
+env:
+  GCP_REGION: europe-west1
+  GCP_PROJECT_ID: ingka-ofd-cop-dev
+  SERVICE_NAME: pubsub-to-solace
+  TESTCONTAINERS_RYUK_DISABLED: true
+
+permissions:
+  contents: write
+  deployments: write
+  id-token: write
+  pull-requests: write
+  repository-projects: write
+
+jobs:
+  pr-title-linting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: $(${{ github.event.pull_request.commits }} + 1)
+
+      - uses: thehanimo/pr-title-checker@v1.4.2
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          configuration_path: .github/pr-title-checker-config.json
+
+  check-feature:
+    name: "check-feature"
+    uses: ./.github/workflows/check-feature.yaml
+    secrets: inherit
+    with:
+      pull_request_commits: ${{ github.event.pull_request.commits }}
+      pull_request_head_sha: ${{ github.event.pull_request.head.sha }}
+      pull_request_base_sha: ${{ github.event.pull_request.base.sha }}
+
+
+  # ======================================================================
+  # TASK TO AUTOMATICALLY APPROVE AND MERGE DEPENDABOT PR
+  # "dependabot-approve-pr" needs to depend on check-feature
+  # ======================================================================
+  dependabot-approve-pr:
+    name: Approve Dependabot PR
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    needs: [check-feature]
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-approve Dependabot PR
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+  dependabot-merge-pr:
+    name: Merge Dependabot PR
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    needs: [dependabot-approve-pr]
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-merge Dependabot PR
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Merge Conflict Notification
+        run: |
+          while ! (gh pr view "${PR_URL}" --json state | grep -q "MERGED") && \
+          (gh pr view "${PR_URL}" --json mergeable | grep -q "UNKNOWN"); do
+            echo "Merge status of ${PR_URL} unknown."
+            sleep 5s
+          done
+
+          if gh pr view "${PR_URL}" --json mergeable | grep -q "CONFLICTING"; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"This Dependabot PR contains conflicts with master and cannot be merged automatically:\n  ${PR_URL}\nPlease, review the pull request and resolve the conflicts manually.\"}" \
+              ${{secrets.PR_SUPERVISOR_WEBHOOK}}
+          fi
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

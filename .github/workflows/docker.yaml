@@ -1,0 +1,24 @@
+name: docker
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-tags: ${{ inputs.version }}
+      - name: push docker image
+        run: |
+          echo "Pushing docker image ${{ inputs.version }} to ${{ inputs.environment }}"
+          echo "DOCKER IMAGE PUSHED"

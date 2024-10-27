@@ -1,0 +1,34 @@
+name: on pre-release
+
+on:
+  release:
+    types: [prereleased]
+
+concurrency:
+  group: on-pre-release
+
+permissions:
+  contents: write
+  deployments: write
+  id-token: write
+  repository-projects: write
+
+jobs:
+  docker:
+    name: "Building Docker Image: Stage"
+    uses: ./.github/workflows/docker.yaml
+    secrets: inherit
+    if: ${{ github.event.release.tag_name != '' }}
+    with:
+      environment: stage
+      version: ${{ github.event.release.tag_name }}
+
+  deploy-to-stage:
+    name: "Deployment: Stage"
+    uses: ./.github/workflows/deployment.yaml
+    secrets: inherit
+    needs: [docker]
+    if: ${{ github.event.release.tag_name != '' }}
+    with:
+      environment: stage
+      version: ${{ github.event.release.tag_name }}

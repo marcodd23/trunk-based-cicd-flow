@@ -4,7 +4,7 @@ go 1.21.3
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.5
-	github.com/marcodd23/go-micro-core v1.0.0
+	github.com/marcodd23/go-micro-core v1.0.2
 )
 
 require (

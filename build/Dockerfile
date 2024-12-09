@@ -1,6 +1,6 @@
 # golang:1.21.2-alpine3.18 using digest
 # Pull using digest to avoid image interception
-FROM golang:1.23.3-alpine3.19 AS builder
+FROM golang:1.23.4-alpine3.19 AS builder
 
 #ARG APP_CMD_FOLDER
 ARG REPO_NAME

@@ -1,10 +1,11 @@
 module github.com/marcodd23/trunk-based-cicd-flow
 
 go 1.21.3
+toolchain go1.22.5
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.5
-	github.com/marcodd23/go-micro-core v1.0.0
+	github.com/marcodd23/go-micro-core v1.0.3
 )
 
 require (
@@ -35,7 +36,7 @@ require (
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

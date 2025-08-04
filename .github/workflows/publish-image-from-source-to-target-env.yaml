@@ -95,7 +95,7 @@ jobs:
 
       # Authenticate for source environment
       - name: acquire gcp token for ${{ inputs.source_env }} environment
-        uses: google-github-actions/auth@v2.1.11
+        uses: google-github-actions/auth@v2.1.12
         with:
           workload_identity_provider: ${{ needs.export-source-env-variables.outputs.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ needs.export-source-env-variables.outputs.GCP_DEPLOYER_SERVICE_ACCOUNT }}
@@ -110,7 +110,7 @@ jobs:
 
       # Authenticate for target environment
       - name: acquire gcp token for ${{ inputs.target_env }} environment
-        uses: google-github-actions/auth@v2.1.11
+        uses: google-github-actions/auth@v2.1.12
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}

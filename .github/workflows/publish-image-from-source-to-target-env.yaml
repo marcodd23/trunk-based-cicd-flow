@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: export docker tags for the 'docker' job
         id: export-docker-tags-and-images
@@ -91,7 +91,7 @@ jobs:
       id-token: write
     steps:
       - name: checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Authenticate for source environment
       - name: acquire gcp token for ${{ inputs.source_env }} environment

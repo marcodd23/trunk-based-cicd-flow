@@ -97,7 +97,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           cache: true
           check-latest: true
@@ -148,7 +148,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           cache: true
           check-latest: true

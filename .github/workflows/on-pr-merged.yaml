@@ -25,7 +25,7 @@ jobs:
       new_version: ${{ steps.bump_version_generator.outputs.new_tag }}
     steps:
       - name: checkout code
-        uses: actions/checkout@c2d88d3ecc89a9ef08eebf45d9637801dcee7eb5 # v4.1.7
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.1.7
         with:
           fetch-depth: 0
 

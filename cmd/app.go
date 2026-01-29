@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	"github.com/gofiber/fiber/v2"
-	"github.com/marcodd23/trunk-based-cicd-flow/internal/config"
 	"log"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/marcodd23/go-micro-core/pkg/configx"
 	"github.com/marcodd23/go-micro-core/pkg/logx"
 	"github.com/marcodd23/go-micro-core/pkg/serverx/fibersrv"
 	"github.com/marcodd23/go-micro-core/pkg/shutdown"
+
+	"github.com/marcodd23/trunk-based-cicd-flow/internal/config"
 )
 
 // ShutdownTimeoutMilli defines the graceful shutdown timeout in milliseconds.

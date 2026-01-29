@@ -25,22 +25,7 @@ func main() {
 	serverManager := fibersrv.NewFiberServer(config)
 
 	// Setup Routes.
-	serverManager.Setup(rootCtx, func(appServer *fiber.App) {
-		appServer.Group("/v1/api")
-		appServer.Get("/", func(c *fiber.Ctx) error {
-			logx.GetLogger().LogInfo(c.Context(), "received GET request")
-
-			return c.SendString("Hello, World!")
-		})
-
-		// Health check endpoint for container orchestration
-		appServer.Get("/health", func(c *fiber.Ctx) error {
-			return c.JSON(fiber.Map{
-				"status": "healthy",
-				"service": "trunk-based-cicd-flow",
-			})
-		})
-	})
+	serverManager.Setup(rootCtx, setupRoutes)
 
 	// Start server
 	serverManager.RunAsync()
@@ -60,4 +45,23 @@ func loadConfiguration() *config.ServiceConfig {
 	}
 
 	return &cfg
+}
+
+// setupRoutes configures all HTTP routes for the application.
+func setupRoutes(appServer *fiber.App) {
+	appServer.Group("/v1/api")
+
+	appServer.Get("/", func(c *fiber.Ctx) error {
+		logx.GetLogger().LogInfo(c.Context(), "received GET request")
+
+		return c.SendString("Hello, World!")
+	})
+
+	// Health check endpoint for container orchestration
+	appServer.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status":  "healthy",
+			"service": "trunk-based-cicd-flow",
+		})
+	})
 }

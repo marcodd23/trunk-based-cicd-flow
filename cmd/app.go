@@ -32,6 +32,14 @@ func main() {
 
 			return c.SendString("Hello, World!")
 		})
+
+		// Health check endpoint for container orchestration
+		appServer.Get("/health", func(c *fiber.Ctx) error {
+			return c.JSON(fiber.Map{
+				"status": "healthy",
+				"service": "trunk-based-cicd-flow",
+			})
+		})
 	})
 
 	// Start server

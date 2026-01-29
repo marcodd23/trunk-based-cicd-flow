@@ -2,18 +2,23 @@ package main
 
 import (
 	"context"
-	"github.com/gofiber/fiber/v2"
-	"github.com/marcodd23/trunk-based-cicd-flow/internal/config"
 	"log"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/marcodd23/go-micro-core/pkg/configx"
 	"github.com/marcodd23/go-micro-core/pkg/logx"
 	"github.com/marcodd23/go-micro-core/pkg/serverx/fibersrv"
 	"github.com/marcodd23/go-micro-core/pkg/shutdown"
+
+	"github.com/marcodd23/trunk-based-cicd-flow/internal/config"
 )
 
-// ShutdownTimeoutMilli - timeout for cleaning up resources before shutting down the server.
+// ShutdownTimeoutMilli defines the graceful shutdown timeout in milliseconds.
+// This allows in-flight requests to complete before the server terminates.
 const ShutdownTimeoutMilli = 500
+
+// ServiceName is the identifier used in logs and health checks.
+const ServiceName = "trunk-based-cicd-flow"
 
 func main() {
 	rootCtx := context.Background()
@@ -25,14 +30,7 @@ func main() {
 	serverManager := fibersrv.NewFiberServer(config)
 
 	// Setup Routes.
-	serverManager.Setup(rootCtx, func(appServer *fiber.App) {
-		appServer.Group("/v1/api")
-		appServer.Get("/", func(c *fiber.Ctx) error {
-			logx.GetLogger().LogInfo(c.Context(), "received GET request")
-
-			return c.SendString("Hello, World!")
-		})
-	})
+	serverManager.Setup(rootCtx, setupRoutes)
 
 	// Start server
 	serverManager.RunAsync()
@@ -52,4 +50,23 @@ func loadConfiguration() *config.ServiceConfig {
 	}
 
 	return &cfg
+}
+
+// setupRoutes configures all HTTP routes for the application.
+func setupRoutes(appServer *fiber.App) {
+	appServer.Group("/v1/api")
+
+	appServer.Get("/", func(c *fiber.Ctx) error {
+		logx.GetLogger().LogInfo(c.Context(), "received GET request")
+
+		return c.SendString("Hello, World!")
+	})
+
+	// Health check endpoint for container orchestration
+	appServer.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status":  "healthy",
+			"service": ServiceName,
+		})
+	})
 }

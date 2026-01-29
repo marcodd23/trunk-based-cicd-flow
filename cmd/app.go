@@ -12,8 +12,12 @@ import (
 	"github.com/marcodd23/go-micro-core/pkg/shutdown"
 )
 
-// ShutdownTimeoutMilli - timeout for cleaning up resources before shutting down the server.
+// ShutdownTimeoutMilli defines the graceful shutdown timeout in milliseconds.
+// This allows in-flight requests to complete before the server terminates.
 const ShutdownTimeoutMilli = 500
+
+// ServiceName is the identifier used in logs and health checks.
+const ServiceName = "trunk-based-cicd-flow"
 
 func main() {
 	rootCtx := context.Background()
@@ -61,7 +65,7 @@ func setupRoutes(appServer *fiber.App) {
 	appServer.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status":  "healthy",
-			"service": "trunk-based-cicd-flow",
+			"service": ServiceName,
 		})
 	})
 }

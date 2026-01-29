@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 #
 # Validates a text against a sub-set of the Conventional Commits
 # specification https://www.conventionalcommits.org

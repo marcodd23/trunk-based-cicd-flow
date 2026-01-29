@@ -47,13 +47,14 @@ jobs:
     name: "Building Docker Image: Prod"
     uses: ./.github/workflows/docker.yaml
     secrets: inherit
+    needs: [rollback-check]
     if: ${{ github.event.release.tag_name != '' }}
     with:
       environment: prod
       version: ${{ github.event.release.tag_name }}
 
   deploy-to-prod:
-    name: "Deployment: Stage"
+    name: "Deployment: Prod"
     uses: ./.github/workflows/deployment.yaml
     secrets: inherit
     needs: [docker]

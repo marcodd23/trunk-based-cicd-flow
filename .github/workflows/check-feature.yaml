@@ -24,12 +24,11 @@ jobs:
       terraform_files_changed: ${{ steps.files_changed_step.outputs.terraform_files_changed }}
     steps:
       - name: checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6
         with:
           fetch-depth: $(${{ inputs.pull_request_commits }} + 1)
           ref: ${{ inputs.pull_request_head_sha }}
           fetch-tags: false
-#          fetch-depth: $(${{ github.event.pull_request.commits }} + 1)
 
       - name: check files changed
         id: files_changed_step
@@ -77,7 +76,7 @@ jobs:
     if: needs.checking-changed-files.outputs.go_files_changed == 'true'
     steps:
       - name: checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6
         with:
           fetch-depth: $(${{ inputs.pull_request_commits }} + 1)
           ref: ${{ inputs.pull_request_head_sha }}
@@ -128,7 +127,7 @@ jobs:
     if: needs.checking-changed-files.outputs.go_files_changed == 'true'
     steps:
       - name: checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6
         with:
           fetch-depth: $(${{ inputs.pull_request_commits }} + 1)
           ref: ${{ inputs.pull_request_head_sha }}

@@ -25,7 +25,7 @@ jobs:
       last_release_tag: ${{ steps.last_release_tag.outputs.version }}
     steps:
       - name: checkout code
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # v4.1.7
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -68,7 +68,7 @@ jobs:
       LAST_RELEASE_TAG: ${{ needs.pre-release-tag.outputs.last_release_tag }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -83,7 +83,7 @@ jobs:
       toTag: ${{ needs.pre-release-tag.outputs.new_prerelease_tag }}
     steps:
       - name: checkout code
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # v4.1.7
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       ###############################
@@ -91,7 +91,7 @@ jobs:
       ###############################
       - name: Generate Changelog
         id: generate_changelog
-        uses: mikepenz/release-changelog-builder-action@v6
+        uses: mikepenz/release-changelog-builder-action@v6.0.1
         with:
           configuration: ".github/release-changelog-config.json"
           fromTag: ${{ env.fromTag }}
@@ -100,7 +100,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: create pre-release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.2.1
         with:
           prerelease: true
           tag_name: ${{ needs.pre-release-tag.outputs.new_prerelease_tag }}

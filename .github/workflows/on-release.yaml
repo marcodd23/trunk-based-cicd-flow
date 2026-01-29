@@ -23,8 +23,8 @@ jobs:
       environment: prod
       version: ${{ github.event.release.tag_name }}
 
-  deploy-to-stage:
-    name: "Deployment: Stage"
+  deploy-to-prod:
+    name: "Deployment: Prod"
     uses: ./.github/workflows/deployment.yaml
     secrets: inherit
     needs: [docker]

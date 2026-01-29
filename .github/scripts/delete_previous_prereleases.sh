@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Fetch the latest released tag
 echo "Latest released tag: $LAST_RELEASE_TAG"

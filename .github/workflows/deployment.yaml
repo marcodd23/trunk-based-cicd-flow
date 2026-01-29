@@ -20,9 +20,10 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: checkout code
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # v4.1.7
+        uses: actions/checkout@v6
         with:
-          fetch-tags: ${{ inputs.version }}
+          fetch-tags: true
+          ref: ${{ inputs.version }}
       - name: deploy
         run: |
           echo "Deploying the app version ${{ inputs.version }} to ${{ inputs.environment }}"

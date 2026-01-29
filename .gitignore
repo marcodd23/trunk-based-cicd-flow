@@ -24,3 +24,6 @@ go.work.sum
 git-token.txt
 
 bin
+
+# macOS
+.DS_Store

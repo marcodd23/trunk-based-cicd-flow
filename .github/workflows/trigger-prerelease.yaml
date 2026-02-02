@@ -91,7 +91,7 @@ jobs:
       ###############################
       - name: Generate Changelog
         id: generate_changelog
-        uses: mikepenz/release-changelog-builder-action@v6.0.1
+        uses: mikepenz/release-changelog-builder-action@v6.1.0
         with:
           configuration: ".github/release-changelog-config.json"
           fromTag: ${{ env.fromTag }}
@@ -100,7 +100,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: create pre-release
-        uses: softprops/action-gh-release@v2.2.1
+        uses: softprops/action-gh-release@v2.5.0
         with:
           prerelease: true
           tag_name: ${{ needs.pre-release-tag.outputs.new_prerelease_tag }}

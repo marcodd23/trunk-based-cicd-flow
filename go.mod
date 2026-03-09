@@ -3,7 +3,7 @@ module github.com/marcodd23/trunk-based-cicd-flow
 go 1.22
 
 require (
-	github.com/gofiber/fiber/v2 v2.52.11
+	github.com/gofiber/fiber/v2 v2.52.12
 	github.com/marcodd23/go-micro-core v1.0.3
 )
 

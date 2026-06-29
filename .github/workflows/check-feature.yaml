@@ -86,7 +86,7 @@ jobs:
       ## Caching
       #################################
       - name: Go Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/go-build
@@ -113,7 +113,7 @@ jobs:
         run: echo "version=$(make go-linter-info)" >> "$GITHUB_OUTPUT"
 
       - name: go linter (cache)
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ${{ steps.go-linter.outputs.version }}
@@ -137,7 +137,7 @@ jobs:
       ## Caching
       #################################
       - name: Go Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/go-build
@@ -164,7 +164,7 @@ jobs:
         run: echo "version=$(make test-info)" >> "$GITHUB_OUTPUT"
 
       - name: Test Tool Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ${{ steps.test.outputs.version }}

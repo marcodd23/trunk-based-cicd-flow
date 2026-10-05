@@ -91,7 +91,7 @@ jobs:
       ###############################
       - name: Generate Changelog
         id: generate_changelog
-        uses: mikepenz/release-changelog-builder-action@v6.3.0
+        uses: mikepenz/release-changelog-builder-action@v6.4.0
         with:
           configuration: ".github/release-changelog-config.json"
           fromTag: ${{ env.fromTag }}
